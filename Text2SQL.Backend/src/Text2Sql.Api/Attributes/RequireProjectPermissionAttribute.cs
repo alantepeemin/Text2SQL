@@ -67,6 +67,7 @@ namespace Text2Sql.Api.Attributes
                 return;
             }
 
+
             await next();
         }
     }
