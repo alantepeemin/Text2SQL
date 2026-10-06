@@ -1,0 +1,2732 @@
+{
+  "info": {
+    "name": "Text2SQL API (v2)",
+    "_postman_id": "a7c1e5d2-0b44-4f10-9c33-t2sqlv2000001",
+    "description": "# Text2SQL API — v2 koleksiyonu\n\nSıfırdan hazırlanmıştır ve **API v2 sözleşmesini** temel alır (çıplak gövde, RFC 7807 hatalar, sayfalama başlıkları).\n\n## Hızlı başlangıç\n1. Ortam seçin: **Text2SQL — Yerel** (`localhost:5000`) veya **Text2SQL — Docker** (`localhost:8080`).\n2. Klasörleri **sırayla** çalıştırın: `01 · Kimlik` kayıt yapar ve token'ları otomatik saklar.\n3. `03 · Veri Kaynakları` altındaki yükleme isteğinde **film.db dosyasını elle seçin**.\n4. Kalan klasörler bu proje/veri kaynağı üzerinde çalışır.\n\n## Doğruluk ve hız turu\n`10 · Doğruluk ve Hız` klasörünü **Collection Runner** ile ve veri dosyası olarak `dogruluk-sorulari.json` seçerek çalıştırın. Konsola her soru için üretilen SQL, süre ve beklenen anahtar kelimelerin tutup tutmadığı yazılır; tur sonunda ortalama süre ve doğruluk oranı raporlanır.\n\n## Notlar\n- Token'lar koleksiyon değişkenlerinde tutulur; elle kopyalamanız gerekmez.\n- Negatif senaryolar (401/402/404/429) bilinçli olarak dahildir: hata sözleşmesi de bir sözleşmedir.\n- Koleksiyon üretim verisi üzerinde çalıştırılmamalıdır — `11 · Temizlik` kaynakları siler.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Ortak ön kontrol: baseUrl tanımlı mı?",
+          "if (!pm.variables.get('baseUrl')) {",
+          "    throw new Error('baseUrl tanımlı değil — sağ üstten bir ortam (environment) seçin.');",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// ── Tüm isteklere uygulanan ortak sözleşme kontrolleri ──────────────",
+          "const yol = pm.request.url.getPath();",
+          "const v2 = yol.startsWith('/api/v2/');",
+          "",
+          "pm.test('sunucu 5xx dönmedi', () => pm.expect(pm.response.code).to.be.below(500));",
+          "",
+          "const tip = pm.response.headers.get('Content-Type') || '';",
+          "if (tip.includes('json')) {",
+          "    pm.test('gövde geçerli JSON', () => { pm.response.json(); });",
+          "}",
+          "",
+          "// v2 hata yanıtları HER ZAMAN ProblemDetails + makine-okunur kod olmalı",
+          "if (v2 && pm.response.code >= 400 && tip.includes('json')) {",
+          "    pm.test('v2 hatası ProblemDetails sözleşmesine uyar', () => {",
+          "        pm.expect(tip).to.include('application/problem+json');",
+          "        const g = pm.response.json();",
+          "        pm.expect(g.code, 'makine-okunur kod eksik').to.be.a('string');",
+          "        pm.expect(g.traceId, 'traceId eksik').to.be.a('string');",
+          "    });",
+          "}",
+          "",
+          "// Sunucu iç detay sızdırmamalı",
+          "if (pm.response.code >= 400) {",
+          "    pm.test('yığın izi (stack trace) sızdırılmaz', () => {",
+          "        pm.expect(pm.response.text()).to.not.include('   at Text2Sql.');",
+          "    });",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "parola",
+      "value": "P@ssw0rd123",
+      "type": "string"
+    },
+    {
+      "key": "organizasyonAdi",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminEposta",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "registrationToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "eskiRefreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "projectId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dataSourceId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "annotationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "jobId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "yoklamaSayisi",
+      "value": "0",
+      "type": "string"
+    },
+    {
+      "key": "idempotencyKey",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "davetliEposta",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "invitationToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "apiKey",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "apiKeyId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "planKodu",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "turIstatistik",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ilkSorguSuresi",
+      "value": "0",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "00 · Sağlık",
+      "item": [
+        {
+          "name": "Sağlık — basit",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "pm.test('kimlik doğrulama gerektirmez', () => pm.expect(pm.response.code).to.not.eql(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sağlık — canlılık (live)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/live",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health",
+                "live"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sağlık — hazırlık (ready)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/ready",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health",
+                "ready"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner — bağımlılıklar hazır', () => pm.response.to.have.status(200));",
+                  "pm.test('yük dengeleyici bu ucu yoklamalı', () => pm.expect(pm.response.responseTime).to.be.below(2000));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Dağıtım sağlığı. `ready` bağımlılıkları (veritabanı) da kontrol eder."
+    },
+    {
+      "name": "01 · Kimlik",
+      "item": [
+        {
+          "name": "1. Organizasyon oluştur",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/auth/create-company",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "auth",
+                "create-company"
+              ]
+            },
+            "description": "İki aşamalı kaydın ilk adımı. Dönen `registrationToken` 2. adımda kullanılır.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{organizasyonAdi}}\",\n  \"maxUsers\": 25,\n  \"monthlyQueryLimit\": 1000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Her koşumda benzersiz organizasyon ve e-posta üret",
+                  "const damga = Date.now();",
+                  "pm.collectionVariables.set('organizasyonAdi', 'Postman Org ' + damga);",
+                  "pm.collectionVariables.set('adminEposta', 'admin-' + damga + '@postman.test');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "const g = pm.response.json();",
+                  "pm.test('v2 çıplak gövde — data sarmalayıcısı yok', () => pm.expect(g).to.not.have.property('data'));",
+                  "pm.test('registrationToken döner', () => pm.expect(g.registrationToken).to.be.a('string').and.not.empty);",
+                  "pm.collectionVariables.set('registrationToken', g.registrationToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Kaydı tamamla (ilk yönetici)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/auth/complete-registration",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "auth",
+                "complete-registration"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registrationToken\": \"{{registrationToken}}\",\n  \"username\": \"postmanadmin\",\n  \"email\": \"{{adminEposta}}\",\n  \"password\": \"{{parola}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "const g = pm.response.json();",
+                  "pm.test('access + refresh token döner', () => {",
+                  "    pm.expect(g.accessToken).to.be.a('string').and.not.empty;",
+                  "    pm.expect(g.refreshToken).to.be.a('string').and.not.empty;",
+                  "});",
+                  "pm.test('aktif organizasyon bilgisi gelir', () => pm.expect(g.organizations).to.be.an('array').that.is.not.empty);",
+                  "pm.collectionVariables.set('accessToken', g.accessToken);",
+                  "pm.collectionVariables.set('refreshToken', g.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Giriş",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEposta}}\",\n  \"password\": \"{{parola}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "const g = pm.response.json();",
+                  "pm.collectionVariables.set('accessToken', g.accessToken);",
+                  "pm.collectionVariables.set('refreshToken', g.refreshToken);",
+                  "pm.test('rol bilgisi taşır', () => pm.expect(g.role).to.eql('admin'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Giriş — yanlış parola (401 beklenir)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Negatif senaryo: hatalı kimlik bilgisi sızdırmadan reddedilmeli.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEposta}}\",\n  \"password\": \"kesinlikle-yanlis-parola\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 döner', () => pm.response.to.have.status(401));",
+                  "pm.test('parola veya hash gövdede geçmez', () => {",
+                  "    const metin = pm.response.text().toLowerCase();",
+                  "    pm.expect(metin).to.not.include('hash');",
+                  "    pm.expect(metin).to.not.include('kesinlikle-yanlis-parola');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Token yenile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Refresh token'lar DÖNER (rotating): yanıttaki yeni token saklanır, eskisi geçersizleşir.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "const g = pm.response.json();",
+                  "pm.test('YENİ bir refresh token döner (rotasyon)', () => {",
+                  "    pm.expect(g.refreshToken).to.not.eql(pm.collectionVariables.get('refreshToken'));",
+                  "});",
+                  "pm.collectionVariables.set('accessToken', g.accessToken);",
+                  "pm.collectionVariables.set('eskiRefreshToken', pm.collectionVariables.get('refreshToken'));",
+                  "pm.collectionVariables.set('refreshToken', g.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Token yenile — kullanılmış token (401 beklenir)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Hırsızlık tespiti: kullanılmış bir refresh token ikinci kez sunulursa reddedilir ve tüm aile iptal edilir.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{eskiRefreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('yeniden kullanım reddedilir', () => pm.expect([400,401]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Organizasyonlarım",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/users/me/organizations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "users",
+                "me",
+                "organizations"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "const g = pm.response.json();",
+                  "pm.test('v2 çıplak dizi döner', () => pm.expect(g).to.be.an('array'));",
+                  "pm.test('en az bir üyelik var', () => pm.expect(g.length).to.be.above(0));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Kayıt → giriş → token yenileme. Token'lar otomatik olarak koleksiyon değişkenlerine yazılır."
+    },
+    {
+      "name": "02 · Projeler",
+      "item": [
+        {
+          "name": "Proje oluştur",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Projesi\",\n  \"description\": \"Koleksiyon tarafından oluşturuldu\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "const g = pm.response.json();",
+                  "pm.test('v2 çıplak değer döner (kimlik)', () => pm.expect(g).to.be.a('number'));",
+                  "pm.collectionVariables.set('projectId', g);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Projelerim",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "pm.test('çıplak dizi döner', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Proje detayı",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects/{{projectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects",
+                "{{projectId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "pm.test('kendi projemiz görünür', () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('projectId'))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Proje güncelle",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects/{{projectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects",
+                "{{projectId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Projesi (güncel)\",\n  \"description\": \"Güncellendi\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Proje erişim listesi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects/{{projectId}}/access",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects",
+                "{{projectId}}",
+                "access"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Olmayan proje (404 beklenir)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects",
+                "999999"
+              ]
+            },
+            "description": "Yabancı/olmayan kaynakta 403 değil 404 dönülür: kaynağın VARLIĞI dahi sızdırılmaz."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 döner', () => pm.response.to.have.status(404));",
+                  "pm.test('ProblemDetails sözleşmesi', () => {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "    const g = pm.response.json();",
+                  "    pm.expect(g.code).to.eql('NOT_FOUND');",
+                  "    pm.expect(g.traceId).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 · Veri Kaynakları",
+      "item": [
+        {
+          "name": "SQLite yükle (dosya seçin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects/{{projectId}}/databases",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects",
+                "{{projectId}}",
+                "databases"
+              ]
+            },
+            "description": "**Elle bir adım gerekir:** `DatabaseFile` alanında `film.db` dosyasını seçin.\n\nPostman güvenlik nedeniyle dosya yollarını dışa aktarılan koleksiyona gömmez.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "Name",
+                  "value": "Sakila",
+                  "type": "text"
+                },
+                {
+                  "key": "Mode",
+                  "value": "LocalFile",
+                  "type": "text"
+                },
+                {
+                  "key": "DbType",
+                  "value": "Sqlite",
+                  "type": "text"
+                },
+                {
+                  "key": "DatabaseFile",
+                  "type": "file",
+                  "src": [],
+                  "description": "film.db dosyasını buradan SEÇİN (Postman dosya yolunu koleksiyona gömmez)"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "const g = pm.response.json();",
+                  "pm.collectionVariables.set('dataSourceId', g.id);",
+                  "pm.test('veri kaynağı kimliği döner', () => pm.expect(g.id).to.be.a('number'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Veri kaynakları",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects/{{projectId}}/databases",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects",
+                "{{projectId}}",
+                "databases"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "const g = pm.response.json();",
+                  "pm.test('çıplak dizi döner', () => pm.expect(g).to.be.an('array'));",
+                  "pm.test('bağlantı dizesi/parola sızdırılmaz', () => {",
+                  "    const metin = JSON.stringify(g).toLowerCase();",
+                  "    pm.expect(metin).to.not.include('password=');",
+                  "    pm.expect(metin).to.not.include('connectionstring');",
+                  "});",
+                  "if (g.length && !pm.collectionVariables.get('dataSourceId')) {",
+                  "    pm.collectionVariables.set('dataSourceId', g[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Şema sözlüğü — girdi ekle",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects/{{projectId}}/databases/{{dataSourceId}}/dictionary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects",
+                "{{projectId}}",
+                "databases",
+                "{{dataSourceId}}",
+                "dictionary"
+              ]
+            },
+            "description": "Anlamsal katman: tablo/kolon açıklamaları LLM prompt'una girer ve SQL kalitesini artırır.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tableName\": \"film\",\n  \"columnName\": null,\n  \"description\": \"Kiralanabilir film kataloğu\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Şema sözlüğü — listele",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects/{{projectId}}/databases/{{dataSourceId}}/dictionary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects",
+                "{{projectId}}",
+                "databases",
+                "{{dataSourceId}}",
+                "dictionary"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "const g = pm.response.json();",
+                  "pm.test('eklenen girdi listede', () => pm.expect(g.length).to.be.above(0));",
+                  "if (g.length) pm.collectionVariables.set('annotationId', g[0].id);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 · Sorgular (senkron)",
+      "item": [
+        {
+          "name": "Sorgu çalıştır",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects/{{projectId}}/queries/execute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects",
+                "{{projectId}}",
+                "queries",
+                "execute"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"databaseId\": \"{{dataSourceId}}\",\n  \"question\": \"Kaç film var?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Idempotency anahtarı: aynı istek iki kez gönderilirse tekrar çalıştırılmaz",
+                  "pm.collectionVariables.set('idempotencyKey', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "const g = pm.response.json();",
+                  "pm.test('sorgu başarılı', () => pm.expect(g.success).to.be.true);",
+                  "pm.test('üretilen SQL yalnızca SELECT', () => {",
+                  "    pm.expect(g.sql.trim().toUpperCase()).to.match(/^SELECT/);",
+                  "    pm.expect(g.sql.toUpperCase()).to.not.match(/\\b(DELETE|UPDATE|INSERT|DROP|ALTER)\\b/);",
+                  "});",
+                  "pm.test('kolon ve satırlar döner', () => {",
+                  "    pm.expect(g.columns).to.be.an('array');",
+                  "    pm.expect(g.rows).to.be.an('array');",
+                  "});",
+                  "pm.test('yanıt süresi 30 sn altında', () => pm.expect(pm.response.responseTime).to.be.below(30000));",
+                  "console.log('SQL:', g.sql, '| süre:', pm.response.responseTime, 'ms');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Aynı istek — idempotency tekrarı",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects/{{projectId}}/queries/execute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects",
+                "{{projectId}}",
+                "queries",
+                "execute"
+              ]
+            },
+            "description": "Bir önceki istekle AYNI anahtar: LLM yeniden çağrılmaz, ilk yanıt tekrarlanır.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"databaseId\": \"{{dataSourceId}}\",\n  \"question\": \"Kaç film var?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "pm.test('yanıt tekrarlandı (Idempotency-Replayed)', () => {",
+                  "    pm.expect(pm.response.headers.get('Idempotency-Replayed')).to.eql('true');",
+                  "});",
+                  "pm.test('tekrar çok hızlı döner (LLM çağrılmadı)', () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sorgu geçmişi (sayfalı)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects/{{projectId}}/queries/history?page=1&pageSize=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects",
+                "{{projectId}}",
+                "queries",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "pm.test('sayfalama başlıkları döner', () => {",
+                  "    pm.expect(pm.response.headers.get('X-Total-Count')).to.be.a('string');",
+                  "    pm.expect(pm.response.headers.get('X-Page')).to.eql('1');",
+                  "    pm.expect(pm.response.headers.get('X-Page-Size')).to.eql('5');",
+                  "});",
+                  "const g = pm.response.json();",
+                  "pm.test('gövde yalnızca liste içerir', () => pm.expect(g).to.be.an('array'));",
+                  "pm.test('sayfa boyutu aşılmaz', () => pm.expect(g.length).to.be.at.most(5));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sorgulanabilir veri kaynakları",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects/{{projectId}}/queries/available-databases",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects",
+                "{{projectId}}",
+                "queries",
+                "available-databases"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Geçersiz veri kaynağı (404 beklenir)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects/{{projectId}}/queries/execute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects",
+                "{{projectId}}",
+                "queries",
+                "execute"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"databaseId\": 999999,\n  \"question\": \"Kaç film var?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 döner', () => pm.response.to.have.status(404));",
+                  "pm.test('makine-okunur kod: NOT_FOUND', () => pm.expect(pm.response.json().code).to.eql('NOT_FOUND'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Boş soru (400 beklenir)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects/{{projectId}}/queries/execute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects",
+                "{{projectId}}",
+                "queries",
+                "execute"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"databaseId\": \"{{dataSourceId}}\",\n  \"question\": \"   \"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 döner', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Önbellek etkisi — aynı soru ikinci kez",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects/{{projectId}}/queries/execute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects",
+                "{{projectId}}",
+                "queries",
+                "execute"
+              ]
+            },
+            "description": "Aynı soru + aynı şema + aynı sözlük → SQL önbelleğinden gelir, LLM çağrılmaz.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"databaseId\": \"{{dataSourceId}}\",\n  \"question\": \"Kaç film var?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "const ilk = Number(pm.collectionVariables.get('ilkSorguSuresi') || 0);",
+                  "console.log('İkinci çağrı süresi: ' + pm.response.responseTime + ' ms (ilk: ' + ilk + ' ms)');",
+                  "pm.test('önbellekli çağrı belirgin şekilde hızlı (<3 sn)', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(3000);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 · Asenkron Sorgu",
+      "item": [
+        {
+          "name": "İş başlat (202 beklenir)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects/{{projectId}}/queries/execute-async",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects",
+                "{{projectId}}",
+                "queries",
+                "execute-async"
+              ]
+            },
+            "description": "Uzun süren sorgular için önerilen yol: istemci beklemez, işi başlatır ve durumu yoklar.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"databaseId\": \"{{dataSourceId}}\",\n  \"question\": \"En çok kiralanan 10 film hangileri?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('202 Accepted döner', () => pm.response.to.have.status(202));",
+                  "pm.test('Location başlığı döner', () => pm.expect(pm.response.headers.get('Location')).to.be.a('string'));",
+                  "const g = pm.response.json();",
+                  "pm.test('iş kimliği ve durumu döner', () => {",
+                  "    pm.expect(g.jobId).to.be.a('number');",
+                  "    pm.expect(g.status).to.eql('pending');",
+                  "});",
+                  "pm.collectionVariables.set('jobId', g.jobId);",
+                  "pm.collectionVariables.set('yoklamaSayisi', 0);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "İş durumunu yokla (tamamlanana kadar)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects/{{projectId}}/queries/jobs/{{jobId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects",
+                "{{projectId}}",
+                "queries",
+                "jobs",
+                "{{jobId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Postman'de bloklamayan bekleme yok; kısa bir meşgul bekleme kullanılır.",
+                  "const bekle = 1000;",
+                  "const baslangic = Date.now();",
+                  "while (Date.now() - baslangic < bekle) { /* bekle */ }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "const g = pm.response.json();",
+                  "const sayac = Number(pm.collectionVariables.get('yoklamaSayisi') || 0) + 1;",
+                  "pm.collectionVariables.set('yoklamaSayisi', sayac);",
+                  "console.log('Yoklama ' + sayac + ' → durum: ' + g.status);",
+                  "",
+                  "if (g.status === 'pending' || g.status === 'running') {",
+                  "    pm.test('iş hâlâ çalışıyor — tekrar yoklanacak', () => pm.expect(sayac).to.be.below(30,",
+                  "        'İş 30 yoklamada tamamlanmadı — worker çalışmıyor olabilir.'));",
+                  "    if (sayac < 30) postman.setNextRequest('İş durumunu yokla (tamamlanana kadar)');",
+                  "} else {",
+                  "    pm.test('iş başarıyla tamamlandı', () => pm.expect(g.status).to.eql('succeeded'));",
+                  "    pm.test('sonuç iş kaydına bağlanmış', () => {",
+                  "        pm.expect(g.result).to.be.an('object');",
+                  "        pm.expect(g.result.sql.trim().toUpperCase()).to.match(/^SELECT/);",
+                  "    });",
+                  "    pm.test('zaman damgaları tutarlı', () => {",
+                  "        pm.expect(new Date(g.completedAt) >= new Date(g.startedAt)).to.be.true;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Olmayan iş (404 beklenir)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects/{{projectId}}/queries/jobs/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects",
+                "{{projectId}}",
+                "queries",
+                "jobs",
+                "999999"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 döner', () => pm.response.to.have.status(404));",
+                  "pm.test('kod NOT_FOUND', () => pm.expect(pm.response.json().code).to.eql('NOT_FOUND'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 · Organizasyon",
+      "item": [
+        {
+          "name": "Üyeler (sayfalı)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/company/users?page=1&pageSize=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "company",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "pm.test('sayfalama başlıkları', () => pm.expect(pm.response.headers.get('X-Total-Count')).to.be.a('string'));",
+                  "const g = pm.response.json();",
+                  "pm.test('parola hash\\'i sızdırılmaz', () => {",
+                  "    pm.expect(JSON.stringify(g).toLowerCase()).to.not.include('passwordhash');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Kullanıcı davet et",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/company/invite-user",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "company",
+                "invite-user"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{davetliEposta}}\",\n  \"role\": \"user\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('davetliEposta', 'davetli-' + Date.now() + '@postman.test');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bekleyen davetler",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/company/invitations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "company",
+                "invitations"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "const g = pm.response.json();",
+                  "pm.test('davet listede görünür', () => pm.expect(g.length).to.be.above(0));",
+                  "const davet = g.find(d => d.email === pm.collectionVariables.get('davetliEposta'));",
+                  "if (davet) pm.collectionVariables.set('invitationToken', davet.invitationToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Onay bekleyen kullanıcılar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/company/pending-users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "company",
+                "pending-users"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Kullanım ve maliyet",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/company/usage",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "company",
+                "usage"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "const g = pm.response.json();",
+                  "pm.test('token ve maliyet ölçülüyor', () => {",
+                  "    pm.expect(g.totalTokens).to.be.a('number');",
+                  "    pm.expect(g.estimatedCostUsd).to.be.a('number');",
+                  "});",
+                  "console.log('Kullanım → sorgu:', g.queryCount, '| token:', g.totalTokens, '| $:', g.estimatedCostUsd);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Denetim kaydı (Free planda 402 beklenir)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/company/audit-logs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "company",
+                "audit-logs"
+              ]
+            },
+            "description": "Denetim kaydı yalnızca Enterprise pakette açıktır. 403 değil **402** döner: sorun yetki değil, paket."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const kod = pm.response.code;",
+                  "pm.test('402 (paket kapsamıyor) veya 200 (Enterprise)', () => pm.expect([200,402]).to.include(kod));",
+                  "if (kod === 402) {",
+                  "    pm.test('kod FEATURE_NOT_AVAILABLE', () => pm.expect(pm.response.json().code).to.eql('FEATURE_NOT_AVAILABLE'));",
+                  "    pm.test('ProblemDetails biçimi', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('problem+json'));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Organizasyon verisini dışa aktar (GDPR)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/company/export",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "company",
+                "export"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "pm.test('parola/anahtar özeti içermez', () => {",
+                  "    const metin = pm.response.text().toLowerCase();",
+                  "    pm.expect(metin).to.not.include('passwordhash');",
+                  "    pm.expect(metin).to.not.include('keyhash');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 · Paketler ve Abonelik",
+      "item": [
+        {
+          "name": "Plan kataloğu",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/billing/plans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "billing",
+                "plans"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "const g = pm.response.json();",
+                  "pm.test('üç plan döner', () => pm.expect(g.length).to.eql(3));",
+                  "pm.test('mevcut plan işaretli', () => pm.expect(g.filter(p => p.isCurrent).length).to.eql(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mevcut abonelik",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/billing/subscription",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "billing",
+                "subscription"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "const g = pm.response.json();",
+                  "pm.collectionVariables.set('planKodu', g.planCode);",
+                  "pm.test('yeni organizasyon Free planla başlar', () => pm.expect(g.planCode).to.eql('free'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pro pakete yükselt",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/billing/subscription/change-plan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "billing",
+                "subscription",
+                "change-plan"
+              ]
+            },
+            "description": "Yükseltme özellik kapılarını ANINDA açar (API anahtarları, uzak veri kaynakları).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"planCode\": \"pro\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "pm.test('plan pro oldu', () => pm.expect(pm.response.json().planCode).to.eql('pro'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Geçersiz plan kodu (404 beklenir)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/billing/subscription/change-plan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "billing",
+                "subscription",
+                "change-plan"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"planCode\": \"boyle-bir-plan-yok\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 döner', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "08 · API Anahtarları",
+      "item": [
+        {
+          "name": "Anahtar üret (Pro gerekir)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/api-keys",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "api-keys"
+              ]
+            },
+            "description": "Tam anahtar YALNIZCA bu yanıtta döner; sunucu SHA-256 özetini saklar.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Anahtarı\",\n  \"scopes\": [\n    \"queries.execute\",\n    \"queries.read\"\n  ],\n  \"expiresInDays\": 30\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "const g = pm.response.json();",
+                  "pm.test('tam anahtar bir kez döner', () => pm.expect(g.plainKey).to.be.a('string').and.not.empty);",
+                  "pm.test('uyarı metni içerir', () => pm.expect(g.warning).to.be.a('string'));",
+                  "pm.collectionVariables.set('apiKey', g.plainKey);",
+                  "pm.collectionVariables.set('apiKeyId', g.key.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Anahtar listesi (yalnızca önek)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/api-keys",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "api-keys"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "const g = pm.response.json();",
+                  "pm.test('tam anahtar ASLA listelenmez', () => {",
+                  "    pm.expect(JSON.stringify(g)).to.not.include(pm.collectionVariables.get('apiKey') || '###');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Anahtarla sorgu çalıştır",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects/{{projectId}}/queries/execute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects",
+                "{{projectId}}",
+                "queries",
+                "execute"
+              ]
+            },
+            "description": "Bearer yerine X-Api-Key: programatik erişim yolu.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"databaseId\": \"{{dataSourceId}}\",\n  \"question\": \"Kaç aktör var?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner — anahtar kabul edildi', () => pm.response.to.have.status(200));",
+                  "pm.test('sorgu çalıştı', () => pm.expect(pm.response.json().success).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Kapsam dışı uç (403 beklenir)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/company/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "company",
+                "users"
+              ]
+            },
+            "description": "Anahtarın kapsamı yalnızca sorgu uçlarıdır; üye listesine erişemez (en-az-yetki).",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 döner', () => pm.expect([401,403]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Geçersiz anahtar (401 beklenir)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Api-Key",
+                "value": "t2s_gecersiz_anahtar_degeri"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects/{{projectId}}/queries/execute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects",
+                "{{projectId}}",
+                "queries",
+                "execute"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"databaseId\": \"{{dataSourceId}}\",\n  \"question\": \"test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 döner', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Anahtarı iptal et",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/api-keys/{{apiKeyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "api-keys",
+                "{{apiKeyId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "İptal edilen anahtar reddedilir (401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects/{{projectId}}/queries/execute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects",
+                "{{projectId}}",
+                "queries",
+                "execute"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"databaseId\": \"{{dataSourceId}}\",\n  \"question\": \"test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 döner', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "09 · Sözleşme Kontrolleri (v1 ↔ v2)",
+      "item": [
+        {
+          "name": "v1 — zarflı yanıt",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/projects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "projects"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "const g = pm.response.json();",
+                  "pm.test('v1 zarfı: success + message + data', () => {",
+                  "    pm.expect(g).to.have.property('success', true);",
+                  "    pm.expect(g).to.have.property('message');",
+                  "    pm.expect(g).to.have.property('data');",
+                  "});",
+                  "pm.test('v1 kullanımdan kaldırılma sinyali taşır', () => {",
+                  "    pm.expect(pm.response.headers.get('Deprecation')).to.eql('true');",
+                  "    pm.expect(pm.response.headers.get('Link')).to.include('successor-version');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "v2 — çıplak yanıt",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "pm.test('zarf yok — kök doğrudan liste', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "pm.test('v2 Deprecation başlığı taşımaz', () => pm.expect(pm.response.headers.get('Deprecation')).to.be.null);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eski route (/api/...) — v1 ile aynı",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "pm.test('eski route da zarflıdır', () => pm.expect(pm.response.json()).to.have.property('data'));",
+                  "pm.test('eski route da Deprecation taşır', () => pm.expect(pm.response.headers.get('Deprecation')).to.eql('true'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "v1 hata — eski zarf",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/projects/{{projectId}}/queries/execute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "projects",
+                "{{projectId}}",
+                "queries",
+                "execute"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"databaseId\": 999999,\n  \"question\": \"test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 döner', () => pm.response.to.have.status(404));",
+                  "const g = pm.response.json();",
+                  "pm.test('v1 hata biçimi korunur', () => {",
+                  "    pm.expect(g).to.have.property('success', false);",
+                  "    pm.expect(g).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "v2 hata — ProblemDetails",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects/{{projectId}}/queries/execute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects",
+                "{{projectId}}",
+                "queries",
+                "execute"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"databaseId\": 999999,\n  \"question\": \"test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 döner', () => pm.response.to.have.status(404));",
+                  "pm.test('RFC 7807 içerik tipi', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json'));",
+                  "const g = pm.response.json();",
+                  "pm.test('sözleşme alanları eksiksiz', () => {",
+                  "    pm.expect(g.status).to.eql(404);",
+                  "    pm.expect(g.code).to.eql('NOT_FOUND');",
+                  "    pm.expect(g.title).to.be.a('string');",
+                  "    pm.expect(g.detail).to.be.a('string');",
+                  "    pm.expect(g.traceId).to.be.a('string').and.not.empty;",
+                  "    pm.expect(g.type).to.include('/errors/');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Kimlik doğrulamasız istek (401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 döner', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "v1 uçlar çıplak kalanlar — execute",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/projects/{{projectId}}/queries/execute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "projects",
+                "{{projectId}}",
+                "queries",
+                "execute"
+              ]
+            },
+            "description": "Tarihsel istisna: `queries/execute` ve `queries/history` v1'de de ZARFSIZ döner. Bu davranış mevcut istemciler için korunmuştur.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"databaseId\": \"{{dataSourceId}}\",\n  \"question\": \"Kaç film var?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "const g = pm.response.json();",
+                  "pm.test('v1 olmasına rağmen çıplak', () => {",
+                  "    pm.expect(g).to.not.have.property('data');",
+                  "    pm.expect(g).to.have.property('sql');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "11 · Temizlik",
+      "item": [
+        {
+          "name": "Veri kaynağını sil",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects/{{projectId}}/databases/{{dataSourceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects",
+                "{{projectId}}",
+                "databases",
+                "{{dataSourceId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Projeyi sil",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/projects/{{projectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "projects",
+                "{{projectId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Çıkış yap",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "auth",
+                "logout"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 döner', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('accessToken', '');"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Koleksiyonun bıraktığı kaynakları temizler. Runner'da tüm koleksiyonu koşarken sonda çalışır."
+    }
+  ]
+}

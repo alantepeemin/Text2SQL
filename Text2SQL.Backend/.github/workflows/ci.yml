@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  # SaaS-7: Secret taraması. Commit'e sızmış anahtar/parola olup olmadığını
+  # her PR'da kontrol eder — insan gözüne güvenmek yeterli değildir.
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # gitleaks geçmişi de tarar
+
+      - name: Gitleaks ile secret taraması
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: .NET 9 kurulumu
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Test (birim + mimari + entegrasyon)
+        run: >
+          dotnet test --no-build --configuration Release
+          --logger "trx" --logger "console;verbosity=minimal"
+          --results-directory TestResults
+          --collect "XPlat Code Coverage"
+
+      - name: Test sonuçlarını yükle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults
+
+  docker-image:
+    needs: build-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker imajı build
+        run: docker build -t text2sql-api:${{ github.sha }} .
+
+      # Registry push için (etkinleştirmek isterseniz):
+      # - docker login + docker tag + docker push adımlarını ekleyin,
+      #   kimlik bilgilerini repo Secrets üzerinden verin.

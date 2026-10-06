@@ -1,0 +1,122 @@
+[
+  {
+    "soru": "Toplam kaç film var?",
+    "beklenenAnahtarKelimeler": [
+      "SELECT",
+      "COUNT",
+      "FILM"
+    ],
+    "enFazlaMs": 25000
+  },
+  {
+    "soru": "En uzun süreli 5 filmi listele",
+    "beklenenAnahtarKelimeler": [
+      "SELECT",
+      "FILM",
+      "LENGTH",
+      "ORDER BY",
+      "LIMIT"
+    ],
+    "enFazlaMs": 25000
+  },
+  {
+    "soru": "Kaç farklı film kategorisi var?",
+    "beklenenAnahtarKelimeler": [
+      "SELECT",
+      "COUNT",
+      "CATEGORY"
+    ],
+    "enFazlaMs": 25000
+  },
+  {
+    "soru": "R dereceli filmlerin sayısı nedir?",
+    "beklenenAnahtarKelimeler": [
+      "SELECT",
+      "COUNT",
+      "FILM",
+      "RATING"
+    ],
+    "enFazlaMs": 25000
+  },
+  {
+    "soru": "Filmlerin ortalama kiralama ücreti nedir?",
+    "beklenenAnahtarKelimeler": [
+      "SELECT",
+      "AVG",
+      "FILM",
+      "RENTAL_RATE"
+    ],
+    "enFazlaMs": 25000
+  },
+  {
+    "soru": "Adı A ile başlayan aktörleri listele",
+    "beklenenAnahtarKelimeler": [
+      "SELECT",
+      "ACTOR",
+      "LIKE"
+    ],
+    "enFazlaMs": 25000
+  },
+  {
+    "soru": "Kategorilere göre film sayısını göster",
+    "beklenenAnahtarKelimeler": [
+      "SELECT",
+      "COUNT",
+      "CATEGORY",
+      "GROUP BY"
+    ],
+    "enFazlaMs": 30000
+  },
+  {
+    "soru": "En çok filmde oynayan 10 aktörü bul",
+    "beklenenAnahtarKelimeler": [
+      "SELECT",
+      "ACTOR",
+      "COUNT",
+      "GROUP BY",
+      "ORDER BY"
+    ],
+    "enFazlaMs": 30000
+  },
+  {
+    "soru": "2 saatten uzun filmleri süreye göre sırala",
+    "beklenenAnahtarKelimeler": [
+      "SELECT",
+      "FILM",
+      "LENGTH",
+      "ORDER BY"
+    ],
+    "enFazlaMs": 25000
+  },
+  {
+    "soru": "Her derecelendirme için ortalama film süresi nedir?",
+    "beklenenAnahtarKelimeler": [
+      "SELECT",
+      "AVG",
+      "FILM",
+      "RATING",
+      "GROUP BY"
+    ],
+    "enFazlaMs": 30000
+  },
+  {
+    "soru": "Kiralama ücreti en yüksek 3 filmi göster",
+    "beklenenAnahtarKelimeler": [
+      "SELECT",
+      "FILM",
+      "RENTAL_RATE",
+      "ORDER BY",
+      "LIMIT"
+    ],
+    "enFazlaMs": 25000
+  },
+  {
+    "soru": "Açıklamasında 'documentary' geçen filmleri bul",
+    "beklenenAnahtarKelimeler": [
+      "SELECT",
+      "FILM",
+      "LIKE"
+    ],
+    "enFazlaMs": 25000
+  }
+]

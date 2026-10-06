@@ -1,0 +1,13 @@
+{
+  "$schema": "https://xunit.net/schema/current/xunit.runner.schema.json",
+
+  "//": "Test adları rapor ve terminalde okunabilir cümlelere dönüşsün",
+  "methodDisplay": "method",
+  "methodDisplayOptions": "replaceUnderscoreWithSpace",
+
+  "//longRunning": "10 saniyeden uzun süren testler uyarı üretir — yavaşlama fark edilsin",
+  "longRunningTestSeconds": 10,
+
+  "diagnosticMessages": false,
+  "shadowCopy": false
+}

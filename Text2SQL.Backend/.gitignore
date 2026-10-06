@@ -1,0 +1,52 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+artifacts/
+[Dd]ebug/
+[Rr]elease/
+TestResults/
+*.coverage
+coverage*.json
+coverage*.xml
+
+## Yapılandırma — SIRLAR ASLA COMMIT EDİLMEZ
+.env
+.env.*
+!.env.example
+appsettings.Development.json
+appsettings.Production.json
+appsettings.Local.json
+*.pfx
+*.p12
+*.key
+secrets.json
+
+## Çalışma zamanı verisi (müşteri veri kaynakları ve sorgu sonuçları)
+# Köke sabitlenmiş kurallar: serbest 'data/' kuralı Windows'ta (büyük/küçük harf
+# duyarsız) tests/**/Data/ klasörünü de yok sayıyor ve kaynak kodu gizliyordu.
+/data/
+/storage/
+src/Text2Sql.Api/Data/
+src/Text2Sql.Api/Storage/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+# İstisna: Postman/test akışlarında kullanılan herkese açık örnek veri (Sakila)
+!film.db
+
+## IDE
+.vs/
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+## Loglar
+logs/
+*.log

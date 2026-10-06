@@ -1,0 +1,60 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Text2Sql.Domain", "src\Text2Sql.Domain\Text2Sql.Domain.csproj", "{B1000000-0001-4000-8000-000000000001}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Text2Sql.Application", "src\Text2Sql.Application\Text2Sql.Application.csproj", "{B1000000-0002-4000-8000-000000000002}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Text2Sql.Infrastructure", "src\Text2Sql.Infrastructure\Text2Sql.Infrastructure.csproj", "{B1000000-0003-4000-8000-000000000003}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Text2Sql.Api", "src\Text2Sql.Api\Text2Sql.Api.csproj", "{B1000000-0004-4000-8000-000000000004}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Text2Sql.Tests.Common", "tests\Text2Sql.Tests.Common\Text2Sql.Tests.Common.csproj", "{B1000000-0005-4000-8000-000000000005}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Text2Sql.Tests.Unit", "tests\Text2Sql.Tests.Unit\Text2Sql.Tests.Unit.csproj", "{B1000000-0006-4000-8000-000000000006}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Text2Sql.Tests.Architecture", "tests\Text2Sql.Tests.Architecture\Text2Sql.Tests.Architecture.csproj", "{B1000000-0007-4000-8000-000000000007}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Text2Sql.Tests.Integration", "tests\Text2Sql.Tests.Integration\Text2Sql.Tests.Integration.csproj", "{B1000000-0008-4000-8000-000000000008}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B1000000-0001-4000-8000-000000000001}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1000000-0001-4000-8000-000000000001}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1000000-0001-4000-8000-000000000001}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1000000-0001-4000-8000-000000000001}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1000000-0002-4000-8000-000000000002}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1000000-0002-4000-8000-000000000002}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1000000-0002-4000-8000-000000000002}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1000000-0002-4000-8000-000000000002}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1000000-0003-4000-8000-000000000003}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1000000-0003-4000-8000-000000000003}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1000000-0003-4000-8000-000000000003}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1000000-0003-4000-8000-000000000003}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1000000-0004-4000-8000-000000000004}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1000000-0004-4000-8000-000000000004}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1000000-0004-4000-8000-000000000004}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1000000-0004-4000-8000-000000000004}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1000000-0005-4000-8000-000000000005}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1000000-0005-4000-8000-000000000005}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1000000-0005-4000-8000-000000000005}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1000000-0005-4000-8000-000000000005}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1000000-0006-4000-8000-000000000006}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1000000-0006-4000-8000-000000000006}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1000000-0006-4000-8000-000000000006}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1000000-0006-4000-8000-000000000006}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1000000-0007-4000-8000-000000000007}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1000000-0007-4000-8000-000000000007}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1000000-0007-4000-8000-000000000007}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1000000-0007-4000-8000-000000000007}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1000000-0008-4000-8000-000000000008}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1000000-0008-4000-8000-000000000008}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1000000-0008-4000-8000-000000000008}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1000000-0008-4000-8000-000000000008}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

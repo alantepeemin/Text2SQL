@@ -1,0 +1,72 @@
+# Tek sunucu dağıtımı (onaylanan mimari karar).
+# Kullanım: JWT_SECRET_KEY ve OPENROUTER_API_KEY ortam değişkenlerini
+# .env dosyasında tanımlayın, sonra: docker compose up -d
+services:
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=text2sql;Username=text2sql;Password=${POSTGRES_PASSWORD:-devpassword}"
+      JwtSettings__SecretKey: "${JWT_SECRET_KEY:?JWT_SECRET_KEY zorunlu (en az 32 karakter)}"
+      OpenRouter__ApiKey: "${OPENROUTER_API_KEY:?OPENROUTER_API_KEY zorunlu}"
+      # Model .env'den değiştirilebilir — yanlış slug sağlayıcıdan 404 döndürür
+      # ve imajı yeniden derlemek zorunda kalmamak için burada dışa açıldı.
+      OpenRouter__Model: "${OPENROUTER_MODEL:-anthropic/claude-haiku-4.5}"
+      Cors__AllowedOrigins__0: "${CORS_ORIGIN:-http://localhost:3001}"
+      # SaaS-7: Anahtar şifreleme sertifikası (yol verilirse etkinleşir)
+      DataProtection__CertificatePath: "${DATAPROTECTION_CERT_PATH:-}"
+      DataProtection__CertificatePassword: "${DATAPROTECTION_CERT_PASSWORD:-}"
+      # SaaS-8: Veri saklama süreleri (gün). 0 = temizleme yapma.
+      Retention__Enabled: "true"
+      Retention__QueryHistoryDays: "90"
+      Retention__UsageRecordDays: "400"
+      Retention__AuditLogDays: "365"
+      Storage__SqliteRoot: /data/sqlite
+      Storage__ResultsRoot: /data/results
+      # Loglar Seq'e de aksin (Serilog config override):
+      Serilog__WriteTo__1__Name: Seq
+      Serilog__WriteTo__1__Args__serverUrl: http://seq
+    volumes:
+      - sqlite-data:/data/sqlite    # müşteri SQLite dosyaları kalıcı
+      - results-data:/data/results  # sorgu sonuç gövdeleri kalıcı
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: text2sql
+      POSTGRES_USER: text2sql
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-devpassword}"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U text2sql -d text2sql"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    # Üretimde host'a port açmayın; yalnızca geliştirme için:
+    ports:
+      - "5432:5432"
+
+  # Log görüntüleme (opsiyonel, geliştirme konforu)
+  seq:
+    image: datalust/seq:latest
+    environment:
+      ACCEPT_EULA: "Y"
+    ports:
+      - "5341:80"
+    volumes:
+      - seq-data:/data
+    restart: unless-stopped
+
+volumes:
+  pg-data:
+  sqlite-data:
+  results-data:
+  seq-data:
