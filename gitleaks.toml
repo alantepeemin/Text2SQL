@@ -1,0 +1,24 @@
+# Gitleaks yapılandırması — varsayılan kurallar AKTİF kalır; yalnızca aşağıdaki
+# bilinen yanlış pozitifler tek tek susturulur. Dizin bazlı geniş muafiyet
+# bilerek verilmedi: tests/, docs/ veya .env.example içine gerçek bir anahtar
+# sızarsa yine yakalanır.
+title = "Text2SQL gitleaks yapılandırması"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Şablon, dokümantasyon örneği ve test sabitleri (gerçek sır değildir)"
+regexTarget = "line"
+regexes = [
+  # .env.example — kullanıcıya yol gösteren yer tutucu
+  '''JWT_SECRET_KEY=en-az-32-karakterlik-guclu-bir-anahtar-uretin''',
+
+  # Testler: 401 senaryosu için bilerek verilen geçersiz anahtar / yanlış parola
+  '''X-Api-Key",\s*"t2s_live_kesinlikleGecersizBirAnahtarDegeri"''',
+  '''password\s*=\s*"yanlis-(sifre|parola)-123"''',
+
+  # Dokümantasyon örnekleri
+  '''Idempotency-Key:\s*9f2c1b7e-3a44-4c9d-9f2e-77a1c0b6d5e1''',
+  '''X-Api-Key:\s*t2s_live_\.\.\.''',
+]
