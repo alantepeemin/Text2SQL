@@ -1,2 +1,18 @@
-# Auto detect text files and perform LF normalization
+# Satır sonu normalizasyonu: depoda LF, çalışma kopyasında platforma göre.
+# Windows + Linux container karışık ortamda CRLF kaynaklı diff gürültüsünü
+# ve bozuk shell script'leri önler.
 * text=auto
+
+# Bu dosyalar HER ZAMAN LF olmalı (container / CI içinde çalışırlar)
+*.sh            text eol=lf
+Dockerfile      text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+
+# İkili dosyalar — diff/normalizasyon uygulanmaz
+*.png     binary
+*.jpg     binary
+*.ico     binary
+*.pfx     binary
+*.db      binary
+*.sqlite  binary

@@ -1,0 +1,30 @@
+# --- Sırlar: hiçbir klasörde commit edilmez ---
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+*.key
+secrets.json
+
+# --- Derleme çıktıları ---
+bin/
+obj/
+TestResults/
+coverage*.json
+coverage*.xml
+node_modules/
+dist/
+
+# --- IDE / işletim sistemi ---
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+.DS_Store
+Thumbs.db
+
+# --- Loglar ---
+logs/
+*.log
